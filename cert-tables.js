@@ -38,17 +38,17 @@ export default function CertTables(props) {
             </td>
             <td className="w-50">
               <div>
-                {cert.meta.selfSigned ? (<span class="badge bg-primary">Self Signed</span>) : undefined}
-                {cert.meta.caCert ? (<span class="badge bg-primary">CA Cert</span>) : undefined}
-                {cert.meta.signatureVerified ? (<span class="badge bg-success">Signature Verified</span>) : (<span class="badge bg-danger">Signature Not Verified</span>)}
-              </div>
+                {cert.meta.selfSigned ? (<span class="badge bg-primary m-1">Self Signed</span>) : undefined}
+                {cert.meta.caCert ? (<span class="badge bg-primary m-1">CA Cert</span>) : undefined}
+                {cert.meta.signatureVerified ? (<span class="badge bg-success m-1">Signature Verified</span>) : (<span class="badge bg-danger">Signature Not Verified</span>)}
               {cert.meta.issuer ?
                 (<div className="card">
                   <div className="card-body">
                     <h5 className="card-title">Issuer <br/> {cert.meta.issuer.getSubject().str}</h5>
                     <pre className="card-text text-break">{cert.meta.issuer.getInfo()}</pre>
                   </div>
-              </div>): (<span class="badge bg-danger">No issuer found</span>)}
+              </div>): (<span class="badge bg-danger m-1">No issuer found</span>)}
+              </div>
             </td>
           </tr>
           )

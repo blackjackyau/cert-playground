@@ -50,7 +50,12 @@ function MainContent() {
           result.meta.selfSigned = true;
         }
 
-        result.meta.caCert = result.cert.getExtBasicConstraints() ? result.cert.getExtBasicConstraints()["cA"] : false; 
+        try {
+          const constraints = result.cert.getExtBasicConstraints();
+          result.meta.caCert = constraints ? result.cert.getExtBasicConstraints()["cA"] : false; 
+        } catch (ex) {
+          console.log("constraints not found");
+        }
 
         let issuerCert = certs[cert.getIssuer().str];
         if (!issuerCert) {
