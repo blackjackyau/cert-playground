@@ -41,7 +41,8 @@ function MainContent() {
       }
 
       return Object.values(certs).map(cert => {
-        const result = { cert, meta: { selfSigned: false, signatureVerified: false, caCert: false, issuer: undefined }};
+        const result = { cert, meta: { selfSigned: false, signatureVerified: false,
+          caCert: false, issuer: undefined, sha1hex: undefined, sha256hex: undefined, notExpired: true }};
 
         const issuer = cert.getIssuer().str;
         const subject = cert.getSubject().str;
@@ -67,6 +68,12 @@ function MainContent() {
           const pubKey = issuerCert.getPublicKey();
           result.meta.signatureVerified = cert.verifySignature(pubKey);
         }
+
+        result.meta.sha1hex = KJUR.crypto.Util.hashHex(cert.hex, 'sha1');
+        result.meta.sha256hex = KJUR.crypto.Util.hashHex(cert.hex, 'sha256');
+
+        const now = new Date().getTime();
+        result.meta.notExpired = now > zulutodate(cert.getNotBefore()).getTime() && now < zulutodate(cert.getNotAfter()).getTime();
 
         console.log(result);
         return result;
