@@ -1,6 +1,5 @@
 
 export default function CertTables(props) {
-  console.log(zulutodate("071231235959Z").toUTCString());
   return (
     <table class="table table-sm">
       <thead>
