@@ -4,12 +4,13 @@ import CertTables from "cert-tables";
 function MainContent() {
   const [caCerts, setCaCerts] = React.useState({});
   const [formData, setFormData] = React.useState({
-    certs: ""
+    certs: "",
+    autoEval: false
   });
 
   const [certs, setCerts] = React.useState();
   const certHandler = new CertHandler();
-  
+
   async function loadCert() {
     const caBundlesResp = await fetch("ca-bundle.crt");
     const caBundlesText = await caBundlesResp.text();
@@ -21,11 +22,25 @@ function MainContent() {
     });
   }
 
+  async function loadGithubCert() {
+    const githubCertResp = await fetch("github-chain.crt");
+    const githubCert = await githubCertResp.text();
+
+    setFormData((prev => {
+      return {
+        ...prev,
+        certs: githubCert,
+        autoEval: true
+      }
+    }));
+  }
+
   function handleChange(event) {
     setFormData(prev => {
       return {
         ...prev,
-        [event.target.name]: event.target.value
+        [event.target.name]: event.target.value,
+        autoEval: false
       }
     })
   }
@@ -34,6 +49,7 @@ function MainContent() {
     setCerts(_ => {
       let certs;
       try {
+        console.log("evaluate", formData.certs);
         certs = certHandler.parse(formData.certs);
       } catch (ex) {
         alert('Error parsing certs', ex);
@@ -41,8 +57,12 @@ function MainContent() {
       }
 
       return Object.values(certs).map(cert => {
-        const result = { cert, meta: { selfSigned: false, signatureVerified: false,
-          caCert: false, issuer: undefined, sha1hex: undefined, sha256hex: undefined, notExpired: true }};
+        const result = {
+          cert, meta: {
+            selfSigned: false, signatureVerified: false,
+            caCert: false, issuer: undefined, sha1hex: undefined, sha256hex: undefined, notExpired: true
+          }
+        };
 
         const issuer = cert.getIssuer().str;
         const subject = cert.getSubject().str;
@@ -53,7 +73,7 @@ function MainContent() {
 
         try {
           const constraints = result.cert.getExtBasicConstraints();
-          result.meta.caCert = constraints ? result.cert.getExtBasicConstraints()["cA"] : false; 
+          result.meta.caCert = constraints ? result.cert.getExtBasicConstraints()["cA"] : false;
         } catch (ex) {
           console.log("constraints not found");
         }
@@ -63,7 +83,7 @@ function MainContent() {
           issuerCert = caCerts[cert.getIssuer().str];
         }
         result.meta.issuer = issuerCert;
-  
+
         if (issuerCert) {
           const pubKey = issuerCert.getPublicKey();
           result.meta.signatureVerified = cert.verifySignature(pubKey);
@@ -87,8 +107,16 @@ function MainContent() {
   // https://stackoverflow.com/questions/42691048/whats-the-detail-in-sha1withrsa >> e.g. 
 
   React.useEffect(() => {
-    loadCert();
-  }, 0);
+    formData.autoEval && evaluate();
+  }, [formData]);
+
+  React.useEffect(() => {
+    const main = async () => {
+      await loadCert();
+      await loadGithubCert();
+    };
+    main();
+  }, []);
 
   return (
     <div className="container">
@@ -96,10 +124,10 @@ function MainContent() {
       <div className="mb-3">
         <label for="certs-ta" className="form-label"><h5>Enter Certificate Chains with -----BEGIN/END CERTIFICATE-----</h5></label>
         <textarea className="form-control" id="certs-ta" name="certs" rows="10"
-                  value={formData.certs} onChange={handleChange}
+          value={formData.certs} onChange={handleChange}
         ></textarea>
         <button className="btn btn-primary m-2" onClick={evaluate}>Evaluate</button>
-        { certs && (<CertTables certs={certs}></CertTables>)}
+        {certs && (<CertTables certs={certs}></CertTables>)}
       </div>
     </div>
   )
