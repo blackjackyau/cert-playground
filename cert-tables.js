@@ -9,18 +9,21 @@ export default function CertTables(props) {
         </tr>
       </thead>
       <tbody>
-        {props.certs.map((cert, index) => {
-          const notBeforeUTC = zulutodate(cert.cert.getNotBefore()).toUTCString();
-          const notBefore = zulutodate(cert.cert.getNotBefore()).toString();
-          const notAfterUTC = zulutodate(cert.cert.getNotAfter()).toUTCString();
-          const notAfter = zulutodate(cert.cert.getNotAfter()).toString();
+        {props.certs.map((certResult, index) => {
+
+          const cert = certResult.cert.cert;
+          const pem = certResult.cert.pem;
+          const notBeforeUTC = zulutodate(cert.getNotBefore()).toUTCString();
+          const notBefore = zulutodate(cert.getNotBefore()).toString();
+          const notAfterUTC = zulutodate(cert.getNotAfter()).toUTCString();
+          const notAfter = zulutodate(cert.getNotAfter()).toString();
 
           return (<tr>
             <td className="w-50">
               <div className="card">
                 <div className="card-body">
-                  <h5 className="card-title">{cert.cert.getSubject().str}</h5>
-                  <pre className="card-text text-break">{cert.cert.getInfo()}</pre>
+                  <h5 className="card-title">{cert.getSubject().str}</h5>
+                  <pre className="card-text text-break">{cert.getInfo()}</pre>
                 </div>
                 <ul className="list-group">
                   <li className="list-group-item text-break">
@@ -40,7 +43,7 @@ export default function CertTables(props) {
                       Public Key
                     </a>
                     <div className="collapse mt-1" id={`colPK${index}`}>
-                      {cert.cert.getPublicKeyHex()}
+                      {cert.getPublicKeyHex()}
                     </div>
                   </li>
                   <li className="list-group-item text-break">
@@ -48,26 +51,47 @@ export default function CertTables(props) {
                       Signature
                     </a>
                     <div className="collapse mt-1" id={`colSignature${index}`}>
-                      {cert.cert.getSignatureValueHex()}
+                      {cert.getSignatureValueHex()}
                     </div>
+                  </li>
+                  <li className="list-group-item text-break">
+                    <a className="btn btn-secondary btn-sm" data-bs-toggle="collapse" href={`#colPem${index}`} role="button" aria-expanded="false" aria-controls={`colPem${index}`}>
+                      Pem
+                    </a>
+                    <pre className="collapse mt-1" id={`colPem${index}`}>
+                      {pem}
+                    </pre>
                   </li>
                 </ul>
               </div>
             </td>
             <td className="w-50">
               <li className="list-group-item">
-                {cert.meta.selfSigned ? (<span class="badge bg-primary m-1">Self Signed</span>) : undefined}
-                {cert.meta.caCert ? (<span class="badge bg-primary m-1">CA Cert</span>) : undefined}
-                {cert.meta.signatureVerified ? (<span class="badge bg-success m-1">Signature Verified</span>) : (<span class="badge bg-danger">Signature Not Verified</span>)}
-                {cert.meta.notExpired ? (<span class="badge bg-success m-1">Not Expired</span>) : (<span class="badge bg-danger">Expired</span>)}
+                {certResult.meta.selfSigned ? (<span class="badge bg-primary m-1">Self Signed</span>) : undefined}
+                {certResult.meta.caCert ? (<span class="badge bg-primary m-1">CA Cert</span>) : undefined}
+                {certResult.meta.signatureVerified ? (<span class="badge bg-success m-1">Signature Verified</span>) : (<span class="badge bg-danger">Signature Not Verified</span>)}
+                {certResult.meta.notExpired ? (<span class="badge bg-success m-1">Not Expired</span>) : (<span class="badge bg-danger">Expired</span>)}
               </li>
               <li className="list-group-item text-break">
-                {cert.meta.issuer ? (
+                {certResult.meta.issuer ? (
                   <div>
                     <a className="btn btn-primary btn-sm" data-bs-toggle="collapse" href={`#colIssuer${index}`} role="button" aria-expanded="false" aria-controls={`colIssuer${index}`}>
                       Issuer Cert
-                    </a><span class="m-2 badge bg-light text-dark">{cert.meta.issuer.getSubject().str}</span>
-                    <pre className="collapse mt-1" id={`colIssuer${index}`}>{cert.meta.issuer.getInfo()}</pre>
+                    </a><span class="m-2 badge bg-light text-dark">{certResult.meta.issuer.cert.getSubject().str}</span>
+                    {certResult.meta.issuerFromPublicCa ? (<span class="badge bg-primary m-1">Public CA</span>) : undefined}
+                    <div className="collapse mt-1" id={`colIssuer${index}`}>
+                      <pre>{certResult.meta.issuer.cert.getInfo()}</pre>
+                      <ul className="list-group">
+                        <li className="list-group-item text-break">
+                          <a className="btn btn-secondary btn-sm" data-bs-toggle="collapse" href={`#colPem${index}`} role="button" aria-expanded="false" aria-controls={`colPem${index}`}>
+                            Pem
+                          </a>
+                          <pre className="collapse mt-1" id={`colPem${index}`}>
+                            {certResult.meta.issuer.pem}
+                          </pre>
+                        </li>
+                      </ul>
+                    </div>
                   </div>) : (<div>No Issuer Found</div>)
                 }
               </li>
@@ -77,9 +101,9 @@ export default function CertTables(props) {
                     Thumbprint
                   </a>
                   <pre className="collapse mt-1" id={`colThumbprint${index}`}>
-                    sha1hex: {cert.meta.sha1hex}
+                    sha1hex: {certResult.meta.sha1hex}
                     <br />
-                    sha256hex: {cert.meta.sha256hex}
+                    sha256hex: {certResult.meta.sha256hex}
                   </pre>
                 </div>
               </li>

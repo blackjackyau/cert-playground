@@ -1,7 +1,9 @@
 import CertTables from "cert-tables";
+import { CertHandler } from "util";
 
+export default function MainContent() {
+  const Link = ReactRouterDOM.Link;
 
-function MainContent() {
   const [caCerts, setCaCerts] = React.useState({});
   const [formData, setFormData] = React.useState({
     certs: "",
@@ -11,13 +13,12 @@ function MainContent() {
   const [certs, setCerts] = React.useState();
   const certHandler = new CertHandler();
 
-  async function loadCert() {
+  async function loadCaCerts() {
     const caBundlesResp = await fetch("ca-bundle.crt");
     const caBundlesText = await caBundlesResp.text();
 
     setCaCerts(() => {
       const caCerts = certHandler.parse(caBundlesText);
-      window.caCerts = caCerts;
       return caCerts;
     });
   }
@@ -49,18 +50,21 @@ function MainContent() {
     setCerts(_ => {
       let certs;
       try {
-        console.log("evaluate", formData.certs);
         certs = certHandler.parse(formData.certs);
       } catch (ex) {
         alert('Error parsing certs', ex);
         return;
       }
 
-      return Object.values(certs).map(cert => {
+      return Object.values(certs).map(certObject => {
+        const cert = certObject.cert;
+
         const result = {
-          cert, meta: {
+          cert: certObject,
+          meta: {
             selfSigned: false, signatureVerified: false,
-            caCert: false, issuer: undefined, sha1hex: undefined, sha256hex: undefined, notExpired: true
+            caCert: false, issuer: undefined, issuerFromPublicCa: false,
+            sha1hex: undefined, sha256hex: undefined, notExpired: true
           }
         };
 
@@ -72,20 +76,24 @@ function MainContent() {
         }
 
         try {
-          const constraints = result.cert.getExtBasicConstraints();
-          result.meta.caCert = constraints ? result.cert.getExtBasicConstraints()["cA"] : false;
+          const constraints = cert.getExtBasicConstraints();
+          result.meta.caCert = constraints ? cert.getExtBasicConstraints()["cA"] : false;
         } catch (ex) {
-          console.log("constraints not found");
+          console.log("constraints not found", cert);
         }
 
         let issuerCert = certs[cert.getIssuer().str];
         if (!issuerCert) {
-          issuerCert = caCerts[cert.getIssuer().str];
+          const caCert = caCerts[cert.getIssuer().str];
+          if (caCert) {
+            result.meta.issuerFromPublicCa = true;
+            issuerCert = caCert;
+          }
         }
         result.meta.issuer = issuerCert;
 
         if (issuerCert) {
-          const pubKey = issuerCert.getPublicKey();
+          const pubKey = issuerCert.cert.getPublicKey();
           result.meta.signatureVerified = cert.verifySignature(pubKey);
         }
 
@@ -95,7 +103,6 @@ function MainContent() {
         const now = new Date().getTime();
         result.meta.notExpired = now > zulutodate(cert.getNotBefore()).getTime() && now < zulutodate(cert.getNotAfter()).getTime();
 
-        console.log(result);
         return result;
       })
     });
@@ -111,16 +118,17 @@ function MainContent() {
   }, [formData]);
 
   React.useEffect(() => {
-    const main = async () => {
-      await loadCert();
+    const setup = async () => {
+      await loadCaCerts();
       await loadGithubCert();
     };
-    main();
+    setup();
   }, []);
 
   return (
     <div className="container">
-      <span class="badge bg-info">Number of CA Cert Loaded: {Object.keys(caCerts).length}</span>
+      <span className="badge bg-info">Number of CA Cert Loaded: {Object.keys(caCerts).length}</span>
+      <span className="badge bg-light"><Link to="/ca-explorer">To CA Explorer</Link></span>
       <div className="mb-3">
         <label for="certs-ta" className="form-label"><h5>Enter Certificate Chains with -----BEGIN/END CERTIFICATE-----</h5></label>
         <textarea className="form-control" id="certs-ta" name="certs" rows="10"
@@ -133,39 +141,3 @@ function MainContent() {
   )
 }
 
-class CertHandler {
-
-  newLine = "\n";
-
-  parse(certBundlesText) {
-    const certs = {};
-    const splits = certBundlesText.split(this.newLine);
-
-    let certTemp = [];
-    for (let i = 0; i < splits.length; i++) {
-      let line = splits[i];
-      if (line.length === 0) {
-        continue;
-      }
-
-      certTemp.push(line);
-      if (line.match(/-END CERTIFICATE-/)) {
-        const cert = new X509();
-        cert.readCertPEM(certTemp.join(this.newLine));
-        cert.getInfo(); // validate
-        certs[`${cert.getSubjectString()}`] = cert;
-      }
-    }
-    return certs;
-  }
-
-}
-
-
-
-ReactDOM.render(
-  <div>
-    <MainContent />
-  </div>,
-  document.getElementById("root")
-)
