@@ -62,9 +62,8 @@ export default function MainContent() {
         const result = {
           cert: certObject,
           meta: {
-            selfSigned: false, signatureVerified: false,
+            selfSigned: false, signatureVerified: false, notExpired: true,
             caCert: false, issuer: undefined, issuerFromPublicCa: false,
-            sha1hex: undefined, sha256hex: undefined, notExpired: true
           }
         };
 
@@ -97,9 +96,6 @@ export default function MainContent() {
           result.meta.signatureVerified = cert.verifySignature(pubKey);
         }
 
-        result.meta.sha1hex = KJUR.crypto.Util.hashHex(cert.hex, 'sha1');
-        result.meta.sha256hex = KJUR.crypto.Util.hashHex(cert.hex, 'sha256');
-
         const now = new Date().getTime();
         result.meta.notExpired = now > zulutodate(cert.getNotBefore()).getTime() && now < zulutodate(cert.getNotAfter()).getTime();
 
@@ -131,7 +127,7 @@ export default function MainContent() {
       <span className="badge bg-light"><Link to="/ca-explorer">To CA Explorer</Link></span>
       <div className="mb-3">
         <label for="certs-ta" className="form-label"><h5>Enter Certificate Chains with -----BEGIN/END CERTIFICATE-----</h5></label>
-        <textarea className="form-control" id="certs-ta" name="certs" rows="10"
+        <textarea spellcheck="false" className="form-control" id="certs-ta" name="certs" rows="10"
           value={formData.certs} onChange={handleChange}
         ></textarea>
         <button className="btn btn-primary m-2" onClick={evaluate}>Evaluate</button>

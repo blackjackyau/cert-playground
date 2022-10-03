@@ -1,4 +1,6 @@
 
+import CertAdditionalInfo from "cert-additional-info";
+
 export default function CertTables(props) {
   return (
     <table class="table table-sm">
@@ -13,10 +15,6 @@ export default function CertTables(props) {
 
           const cert = certResult.cert.cert;
           const pem = certResult.cert.pem;
-          const notBeforeUTC = zulutodate(cert.getNotBefore()).toUTCString();
-          const notBefore = zulutodate(cert.getNotBefore()).toString();
-          const notAfterUTC = zulutodate(cert.getNotAfter()).toUTCString();
-          const notAfter = zulutodate(cert.getNotAfter()).toString();
 
           return (<tr>
             <td className="w-50">
@@ -25,44 +23,7 @@ export default function CertTables(props) {
                   <h5 className="card-title">{cert.getSubject().str}</h5>
                   <pre className="card-text text-break">{cert.getInfo()}</pre>
                 </div>
-                <ul className="list-group">
-                  <li className="list-group-item text-break">
-                    <div>Additional Info</div>
-                    <pre>
-                      Not Before (UTC): {notBeforeUTC}
-                      <br />
-                      Not Before: {notBefore}
-                      <br />
-                      Not After (UTC): {notAfterUTC}
-                      <br />
-                      Not After: {notAfter}
-                    </pre>
-                  </li>
-                  <li className="list-group-item text-break">
-                    <a className="btn btn-secondary btn-sm" data-bs-toggle="collapse" href={`#colPK${index}`} role="button" aria-expanded="false" aria-controls={`colPK${index}`}>
-                      Public Key
-                    </a>
-                    <div className="collapse mt-1" id={`colPK${index}`}>
-                      {cert.getPublicKeyHex()}
-                    </div>
-                  </li>
-                  <li className="list-group-item text-break">
-                    <a className="btn btn-secondary btn-sm" data-bs-toggle="collapse" href={`#colSignature${index}`} role="button" aria-expanded="false" aria-controls={`colSignature${index}`}>
-                      Signature
-                    </a>
-                    <div className="collapse mt-1" id={`colSignature${index}`}>
-                      {cert.getSignatureValueHex()}
-                    </div>
-                  </li>
-                  <li className="list-group-item text-break">
-                    <a className="btn btn-secondary btn-sm" data-bs-toggle="collapse" href={`#colPem${index}`} role="button" aria-expanded="false" aria-controls={`colPem${index}`}>
-                      Pem
-                    </a>
-                    <pre className="collapse mt-1" id={`colPem${index}`}>
-                      {pem}
-                    </pre>
-                  </li>
-                </ul>
+                <CertAdditionalInfo cert={cert} pem={pem} id={`subject-${index}`}></CertAdditionalInfo>
               </div>
             </td>
             <td className="w-50">
@@ -81,31 +42,10 @@ export default function CertTables(props) {
                     {certResult.meta.issuerFromPublicCa ? (<span class="badge bg-primary m-1">Public CA</span>) : undefined}
                     <div className="collapse mt-1" id={`colIssuer${index}`}>
                       <pre>{certResult.meta.issuer.cert.getInfo()}</pre>
-                      <ul className="list-group">
-                        <li className="list-group-item text-break">
-                          <a className="btn btn-secondary btn-sm" data-bs-toggle="collapse" href={`#colPem${index}`} role="button" aria-expanded="false" aria-controls={`colPem${index}`}>
-                            Pem
-                          </a>
-                          <pre className="collapse mt-1" id={`colPem${index}`}>
-                            {certResult.meta.issuer.pem}
-                          </pre>
-                        </li>
-                      </ul>
+                      <CertAdditionalInfo cert={certResult.meta.issuer.cert} pem={certResult.meta.issuer.pem} id={`issuer-${index}`}></CertAdditionalInfo>
                     </div>
                   </div>) : (<div>No Issuer Found</div>)
                 }
-              </li>
-              <li className="list-group-item text-break">
-                <div>
-                  <a className="btn btn-primary btn-sm" data-bs-toggle="collapse" href={`#colThumbprint${index}`} role="button" aria-expanded="false" aria-controls={`colThumbprint${index}`}>
-                    Thumbprint
-                  </a>
-                  <pre className="collapse mt-1" id={`colThumbprint${index}`}>
-                    sha1hex: {certResult.meta.sha1hex}
-                    <br />
-                    sha256hex: {certResult.meta.sha256hex}
-                  </pre>
-                </div>
               </li>
             </td>
           </tr>

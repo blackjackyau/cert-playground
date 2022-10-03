@@ -1,4 +1,5 @@
 import { CertHandler } from "util";
+import CertAdditionalInfo from "cert-additional-info";
 
 export default function CaExplorer() {
   const Link = ReactRouterDOM.Link;
@@ -29,12 +30,6 @@ export default function CaExplorer() {
       <span className="badge bg-light"><Link  to="/">To Cert Playground</Link></span>
       <div className="mb-3">
         {Object.entries(caCerts).map(([subject, { cert, pem }], index) => {
-
-          const notBeforeUTC = zulutodate(cert.getNotBefore()).toUTCString();
-          const notBefore = zulutodate(cert.getNotBefore()).toString();
-          const notAfterUTC = zulutodate(cert.getNotAfter()).toUTCString();
-          const notAfter = zulutodate(cert.getNotAfter()).toString();
-
           return (<div className="card">
             <div className="card-header" id={`heading${index}`}>
               <h5 className="mb-0">
@@ -47,44 +42,7 @@ export default function CaExplorer() {
               <div className="card-body">
                 <pre className="card-text text-break">{cert.getInfo()}</pre>
               </div>
-              <ul className="list-group">
-                <li className="list-group-item text-break">
-                  <div>Additional Info</div>
-                  <pre>
-                    Not Before (UTC): {notBeforeUTC}
-                    <br />
-                    Not Before: {notBefore}
-                    <br />
-                    Not After (UTC): {notAfterUTC}
-                    <br />
-                    Not After: {notAfter}
-                  </pre>
-                </li>
-                <li className="list-group-item text-break">
-                  <a className="btn btn-secondary btn-sm" data-bs-toggle="collapse" href={`#colPK${index}`} role="button" aria-expanded="false" aria-controls={`colPK${index}`}>
-                    Public Key
-                  </a>
-                  <div className="collapse mt-1" id={`colPK${index}`}>
-                    {cert.getPublicKeyHex()}
-                  </div>
-                </li>
-                <li className="list-group-item text-break">
-                  <a className="btn btn-secondary btn-sm" data-bs-toggle="collapse" href={`#colSignature${index}`} role="button" aria-expanded="false" aria-controls={`colSignature${index}`}>
-                    Signature
-                  </a>
-                  <div className="collapse mt-1" id={`colSignature${index}`}>
-                    {cert.getSignatureValueHex()}
-                  </div>
-                </li>
-                <li className="list-group-item text-break">
-                  <a className="btn btn-secondary btn-sm" data-bs-toggle="collapse" href={`#colPem${index}`} role="button" aria-expanded="false" aria-controls={`colPem${index}`}>
-                    Pem
-                  </a>
-                  <pre className="collapse mt-1" id={`colPem${index}`}>
-                    {pem}
-                  </pre>
-                </li>
-              </ul>
+              <CertAdditionalInfo cert={cert} pem={pem} id={index}></CertAdditionalInfo>
             </div>
           </div>)
         })

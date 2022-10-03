@@ -2,3 +2,10 @@ pre {
   white-space: pre-wrap;
   word-break: keep-all
 }
+
+.prelike-font {
+  display: block;
+  font-family: monospace;
+  margin: 1em 0;
+  font-size: .875em;
+}
